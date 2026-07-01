@@ -1,27 +1,21 @@
 package com.example.repository
 
-import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.tasks.await
-
-class AuthRepository {
-    private val auth = FirebaseAuth.getInstance()
+class AuthRepository(private val prefsRepository: PreferencesRepository) {
 
     suspend fun loginTeacher(password: String): Result<Boolean> {
         return try {
-            // Hardcoded teacher email for simplicity, user just enters password "123456"
-            // For production, this should be configurable or full login
-            auth.signInWithEmailAndPassword("teacher@anisti.com", password).await()
-            Result.success(true)
+            if (password == "123456") {
+                prefsRepository.saveUserRole("teacher")
+                Result.success(true)
+            } else {
+                Result.failure(Exception("كلمة السر خاطئة"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    fun isTeacherLoggedIn(): Boolean {
-        return auth.currentUser != null
-    }
-
-    fun logout() {
-        auth.signOut()
+    suspend fun logout() {
+        prefsRepository.clearSession()
     }
 }

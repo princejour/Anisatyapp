@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,6 +20,7 @@ import com.example.ui.screens.teacher.ClassDetailsScreen
 import com.example.ui.screens.teacher.StudentDetailsScreen
 import com.example.ui.screens.teacher.TeacherDashboardScreen
 import com.example.ui.screens.teacher.TeacherLoginScreen
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 @Serializable object WelcomeRoute
@@ -33,12 +35,14 @@ import kotlinx.serialization.Serializable
 fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
-    val authRepo = remember { AuthRepository() }
-    val firestoreRepo = remember { FirestoreRepository() }
     val prefsRepo = remember { PreferencesRepository(context) }
+    val authRepo = remember { AuthRepository(prefsRepo) }
+    val firestoreRepo = remember { FirestoreRepository() }
     
     val userRole by prefsRepo.userRoleFlow.collectAsState(initial = null)
     val parentCode by prefsRepo.parentCodeFlow.collectAsState(initial = null)
+    
+    val coroutineScope = rememberCoroutineScope()
 
     NavHost(
         navController = navController,
@@ -47,7 +51,7 @@ fun AppNavigation() {
         composable<WelcomeRoute> {
             WelcomeScreen(
                 onTeacherClick = {
-                    if (authRepo.isTeacherLoggedIn()) {
+                    if (userRole == "teacher") {
                         navController.navigate(TeacherDashboardRoute) {
                             popUpTo(WelcomeRoute) { inclusive = true }
                         }
@@ -80,7 +84,9 @@ fun AppNavigation() {
                     navController.navigate(ClassDetailsRoute(classId, className, classGroup))
                 },
                 onLogout = {
-                    authRepo.logout()
+                    coroutineScope.launch {
+                        authRepo.logout()
+                    }
                     navController.navigate(WelcomeRoute) {
                         popUpTo(0) { inclusive = true }
                     }
