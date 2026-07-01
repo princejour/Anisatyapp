@@ -22,11 +22,13 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Give permission to Gradle Wrapper
-        run: chmod +x ./gradlew
+      - name: Set up Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
 
       - name: Build Debug APK
-        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         if: success()
