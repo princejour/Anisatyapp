@@ -140,9 +140,9 @@ class FirestoreRepository {
     }
 
     // --- Dummy Data Init ---
-    suspend fun initializeDummyData() {
+    suspend fun initializeDummyData(force: Boolean = false) {
         val studentsSnap = db.collection("students").get().await()
-        if (studentsSnap.size() < 40) {
+        if (force || studentsSnap.size() < 40) {
             // Delete existing classes and students to start fresh
             val classesSnap = db.collection("classes").get().await()
             for (doc in classesSnap.documents) { doc.reference.delete().await() }

@@ -36,6 +36,11 @@ fun TeacherDashboardScreen(
             TopAppBar(
                 title = { Text("لوحة تحكم المعلمة") },
                 actions = {
+                    TextButton(onClick = {
+                        coroutineScope.launch { firestoreRepository.initializeDummyData(force = true) }
+                    }) {
+                        Text("إعادة تهيئة البيانات", color = MaterialTheme.colorScheme.primary)
+                    }
                     TextButton(onClick = onLogout) {
                         Text("خروج", color = MaterialTheme.colorScheme.error)
                     }
