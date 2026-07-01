@@ -1,0 +1,8 @@
+{
+  "name": "أنيستي حنان",
+  "description": "تطبيق للتواصل بين المعلمة وأولياء التلاميذ.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
