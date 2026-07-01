@@ -147,10 +147,23 @@ class FirestoreRepository {
 
     // --- Demo Data Init ---
     suspend fun seedDemoDataIfNeeded(): Boolean {
+        val classesSnap = db.collection("classes").get().await()
         val studentsSnap = db.collection("students").get().await()
-        if (studentsSnap.size() > 0) {
-            return false // Data already exists
+        
+        val has5A = classesSnap.documents.any { it.getString("name") == "الخامسة أ" }
+        val has5B = classesSnap.documents.any { it.getString("name") == "الخامسة ب" }
+        
+        val students5ACount = studentsSnap.documents.count { it.getString("className") == "الخامسة أ" }
+        val students5BCount = studentsSnap.documents.count { it.getString("className") == "الخامسة ب" }
+        
+        // If everything is perfectly set up, return false
+        if (has5A && has5B && students5ACount >= 22 && students5BCount >= 22 && classesSnap.size() == 2) {
+            return false
         }
+        
+        // Otherwise, clean up everything (duplicates, empties, etc.) to start fresh
+        for (doc in studentsSnap.documents) { doc.reference.delete().await() }
+        for (doc in classesSnap.documents) { doc.reference.delete().await() }
 
         val class5A = db.collection("classes").document()
         class5A.set(SchoolClass(class5A.id, "الخامسة أ", "الخامسة", "أ")).await()
