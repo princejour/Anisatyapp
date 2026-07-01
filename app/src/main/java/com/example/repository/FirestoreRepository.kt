@@ -148,55 +148,90 @@ class FirestoreRepository {
     // --- Demo Data Init ---
     suspend fun seedDemoDataIfNeeded(): Boolean {
         val classesSnap = db.collection("classes").get().await()
-        val studentsSnap = db.collection("students").get().await()
         
-        val has5A = classesSnap.documents.any { it.getString("name") == "الخامسة أ" }
-        val has5B = classesSnap.documents.any { it.getString("name") == "الخامسة ب" }
+        val classesByName = classesSnap.documents.groupBy { it.getString("name") }
         
-        val students5ACount = studentsSnap.documents.count { it.getString("className") == "الخامسة أ" }
-        val students5BCount = studentsSnap.documents.count { it.getString("className") == "الخامسة ب" }
+        var class5AId: String? = null
+        var class5BId: String? = null
         
-        // If everything is perfectly set up, return false
-        if (has5A && has5B && students5ACount >= 22 && students5BCount >= 22 && classesSnap.size() == 2) {
-            return false
+        var modificationsMade = false
+
+        // Process "الخامسة أ"
+        val class5AList = classesByName["الخامسة أ"]
+        if (!class5AList.isNullOrEmpty()) {
+            class5AId = class5AList.first().id
+            for (i in 1 until class5AList.size) {
+                db.collection("classes").document(class5AList[i].id).delete().await()
+                val duplicateStudents = db.collection("students").whereEqualTo("classId", class5AList[i].id).get().await()
+                for (doc in duplicateStudents) doc.reference.delete().await()
+                modificationsMade = true
+            }
+        } else {
+            val newClass = db.collection("classes").document()
+            newClass.set(SchoolClass(newClass.id, "الخامسة أ", "الخامسة", "أ")).await()
+            class5AId = newClass.id
+            modificationsMade = true
         }
+
+        // Process "الخامسة ب"
+        val class5BList = classesByName["الخامسة ب"]
+        if (!class5BList.isNullOrEmpty()) {
+            class5BId = class5BList.first().id
+            for (i in 1 until class5BList.size) {
+                db.collection("classes").document(class5BList[i].id).delete().await()
+                val duplicateStudents = db.collection("students").whereEqualTo("classId", class5BList[i].id).get().await()
+                for (doc in duplicateStudents) doc.reference.delete().await()
+                modificationsMade = true
+            }
+        } else {
+            val newClass = db.collection("classes").document()
+            newClass.set(SchoolClass(newClass.id, "الخامسة ب", "الخامسة", "ب")).await()
+            class5BId = newClass.id
+            modificationsMade = true
+        }
+
+        // Handle students for 5A
+        val students5ASnap = db.collection("students").whereEqualTo("classId", class5AId).get().await()
+        val currentStudents5A = students5ASnap.documents.mapNotNull { it.getString("name") }.toSet()
         
-        // Otherwise, clean up everything (duplicates, empties, etc.) to start fresh
-        for (doc in studentsSnap.documents) { doc.reference.delete().await() }
-        for (doc in classesSnap.documents) { doc.reference.delete().await() }
-
-        val class5A = db.collection("classes").document()
-        class5A.set(SchoolClass(class5A.id, "الخامسة أ", "الخامسة", "أ")).await()
-
-        val class5B = db.collection("classes").document()
-        class5B.set(SchoolClass(class5B.id, "الخامسة ب", "الخامسة", "ب")).await()
-
-        val students5A = listOf(
+        val targetStudents5A = listOf(
             "أحمد بن علي", "مريم الجبالي", "ياسين التومي", "إيناس العلوي", "سيف الدين مرزوق",
             "نور الدين السالمي", "آية بن يوسف", "محمد أمين التريكي", "رانيا العياري", "سارة بن محمود",
             "آدم الرقيق", "ملاك الزواري", "إلياس الكعبي", "جنى الفقيه", "يوسف الهمامي",
             "سلمى بن صالح", "كريم الجلاصي", "هدى الماجري", "ريان الغربي", "لينا الشابي",
             "فراس بن عمر", "تقوى العبيدي"
         )
-        students5A.forEachIndexed { index, name ->
-            val numStr = (index + 1).toString().padStart(3, '0')
-            val code = "HANAN-5A-$numStr"
-            addStudent(name, class5A.id, "الخامسة أ", "5A", code)
+        
+        targetStudents5A.forEachIndexed { index, name ->
+            if (!currentStudents5A.contains(name)) {
+                val numStr = (index + 1).toString().padStart(3, '0')
+                val code = "HANAN-5A-$numStr"
+                addStudent(name, class5AId!!, "الخامسة أ", "5A", code)
+                modificationsMade = true
+            }
         }
 
-        val students5B = listOf(
+        // Handle students for 5B
+        val students5BSnap = db.collection("students").whereEqualTo("classId", class5BId).get().await()
+        val currentStudents5B = students5BSnap.documents.mapNotNull { it.getString("name") }.toSet()
+
+        val targetStudents5B = listOf(
             "حنان السالمي", "آدم الرقيق", "سارة العياري", "مالك بن يوسف", "نور الهدى الكعبي",
             "سيف العابدين بن علي", "آمنة الجبالي", "مروان التومي", "إسراء العلوي", "يوسف مرزوق",
             "رقية السعدي", "أنس بن رمضان", "لميس الطرابلسي", "مهدي بن سالم", "مريم القاسمي",
             "أيوب الفقيه", "سيرين الغربي", "حمزة بن محمود", "ندى الزواري", "وليد الشابي",
             "جودي الهمامي", "خليل العبيدي"
         )
-        students5B.forEachIndexed { index, name ->
-            val numStr = (index + 1).toString().padStart(3, '0')
-            val code = "HANAN-5B-$numStr"
-            addStudent(name, class5B.id, "الخامسة ب", "5B", code)
+        
+        targetStudents5B.forEachIndexed { index, name ->
+            if (!currentStudents5B.contains(name)) {
+                val numStr = (index + 1).toString().padStart(3, '0')
+                val code = "HANAN-5B-$numStr"
+                addStudent(name, class5BId!!, "الخامسة ب", "5B", code)
+                modificationsMade = true
+            }
         }
         
-        return true // Data was created
+        return modificationsMade
     }
 }

@@ -130,10 +130,8 @@ fun ClassCard(
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
-    var studentCount by remember { mutableIntStateOf(0) }
-    LaunchedEffect(schoolClass.id) {
-        studentCount = firestoreRepository.getStudentsCount(schoolClass.id)
-    }
+    val students by firestoreRepository.getStudents(schoolClass.id).collectAsState(initial = emptyList())
+    val studentCount = students.size
 
     Card(
         modifier = Modifier
