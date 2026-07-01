@@ -37,6 +37,7 @@ fun ClassDetailsScreen(
     val classes by firestoreRepository.getClasses().collectAsState(initial = emptyList())
     
     var showAddDialog by remember { mutableStateOf(false) }
+    var studentToDelete by remember { mutableStateOf<Student?>(null) }
     var studentToEdit by remember { mutableStateOf<Student?>(null) }
     var newName by remember { mutableStateOf("") }
 
@@ -61,8 +62,8 @@ fun ClassDetailsScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = { csvLauncher.launch("text/csv") }) {
-                        Text("رفع قائمة (CSV)")
+                    TextButton(onClick = { csvLauncher.launch("*/*") }) {
+                        Text("استيراد قائمة تلاميذ")
                     }
                 }
             )
@@ -101,14 +102,33 @@ fun ClassDetailsScreen(
                             }
                         },
                         onDelete = {
-                            coroutineScope.launch {
-                                firestoreRepository.deleteStudent(student.id)
-                            }
+                            studentToDelete = student
                         }
                     )
                 }
             }
         }
+    }
+
+    if (studentToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { studentToDelete = null },
+            title = { Text("تأكيد الحذف") },
+            text = { Text("هل تريد حذف هذا التلميذ؟") },
+            confirmButton = {
+                Button(onClick = {
+                    coroutineScope.launch {
+                        firestoreRepository.deleteStudent(studentToDelete!!.id)
+                        studentToDelete = null
+                    }
+                }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
+                    Text("حذف")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { studentToDelete = null }) { Text("إلغاء") }
+            }
+        )
     }
 
     if (showAddDialog) {
@@ -139,8 +159,7 @@ fun ClassDetailsScreen(
                 Button(onClick = {
                     if (newName.isNotBlank()) {
                         coroutineScope.launch {
-                            val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                            db.collection("students").document(studentToEdit!!.id).update("name", newName)
+                            firestoreRepository.updateStudent(studentToEdit!!.id, newName)
                             studentToEdit = null
                         }
                     }

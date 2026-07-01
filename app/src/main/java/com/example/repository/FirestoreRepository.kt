@@ -61,11 +61,13 @@ class FirestoreRepository {
         awaitClose { subscription.remove() }
     }
 
-    suspend fun addStudent(name: String, classId: String, className: String, group: String) {
+    suspend fun addStudent(name: String, classId: String, className: String, group: String, customCode: String? = null) {
         val doc = db.collection("students").document()
-        val randomSuffix = (1000..9999).random()
-        // Example: Ech-1234
-        val parentCode = "Ech-$randomSuffix"
+        
+        val parentCode = customCode ?: run {
+            val randomSuffix = (1000..9999).random()
+            "Ech-$randomSuffix"
+        }
         
         val student = Student(
             id = doc.id,
@@ -75,6 +77,10 @@ class FirestoreRepository {
             parentCode = parentCode
         )
         doc.set(student).await()
+    }
+
+    suspend fun updateStudent(studentId: String, newName: String) {
+        db.collection("students").document(studentId).update("name", newName).await()
     }
 
     suspend fun deleteStudent(studentId: String) {
@@ -139,42 +145,45 @@ class FirestoreRepository {
         awaitClose { subscription.remove() }
     }
 
-    // --- Dummy Data Init ---
-    suspend fun initializeDummyData(force: Boolean = false) {
+    // --- Demo Data Init ---
+    suspend fun seedDemoDataIfNeeded(): Boolean {
         val studentsSnap = db.collection("students").get().await()
-        if (force || studentsSnap.size() < 40) {
-            // Delete existing classes and students to start fresh
-            val classesSnap = db.collection("classes").get().await()
-            for (doc in classesSnap.documents) { doc.reference.delete().await() }
-            for (doc in studentsSnap.documents) { doc.reference.delete().await() }
-
-            val class5A = db.collection("classes").document()
-            class5A.set(SchoolClass(class5A.id, "الخامسة أ", "الخامسة", "أ")).await()
-
-            val class5B = db.collection("classes").document()
-            class5B.set(SchoolClass(class5B.id, "الخامسة ب", "الخامسة", "ب")).await()
-
-            val students5A = listOf(
-                "أحمد بن علي", "مريم الجبالي", "ياسين التومي", "إيناس العلوي", "سيف الدين مرزوق",
-                "محمد العياري", "فاطمة الزهراء", "عمر الفاروق", "يوسف الشاهد", "نور الهدى",
-                "علي بن سالم", "سلمى العبيدي", "خليل الطرابلسي", "سارة الماجري", "ريان المبروك",
-                "آدم الغربي", "لينا الخياري", "مهدي الفالح", "آية بن عمار", "رامي السويسي",
-                "ميساء الجريدي", "إلياس البجاوي"
-            )
-            students5A.forEach { name ->
-                addStudent(name, class5A.id, "الخامسة أ", "5A")
-            }
-
-            val students5B = listOf(
-                "حنان السالمي", "آدم الرقيق", "سارة العياري", "مالك بن يوسف", "نور الهدى الكعبي",
-                "ياسر الفتني", "ريتاج المولهي", "أنس الرياحي", "مروان الحداد", "شهد الغرياني",
-                "زينب القروي", "محمد أمين", "فراس الشابي", "مرام الباهي", "عزيز الجوادي",
-                "جنى الزغلامي", "يحيى العوني", "أريج الميساوي", "حاتم الدرويش", "شروق المكي",
-                "سامي العابد", "إسراء الدالي"
-            )
-            students5B.forEach { name ->
-                addStudent(name, class5B.id, "الخامسة ب", "5B")
-            }
+        if (studentsSnap.size() > 0) {
+            return false // Data already exists
         }
+
+        val class5A = db.collection("classes").document()
+        class5A.set(SchoolClass(class5A.id, "الخامسة أ", "الخامسة", "أ")).await()
+
+        val class5B = db.collection("classes").document()
+        class5B.set(SchoolClass(class5B.id, "الخامسة ب", "الخامسة", "ب")).await()
+
+        val students5A = listOf(
+            "أحمد بن علي", "مريم الجبالي", "ياسين التومي", "إيناس العلوي", "سيف الدين مرزوق",
+            "نور الدين السالمي", "آية بن يوسف", "محمد أمين التريكي", "رانيا العياري", "سارة بن محمود",
+            "آدم الرقيق", "ملاك الزواري", "إلياس الكعبي", "جنى الفقيه", "يوسف الهمامي",
+            "سلمى بن صالح", "كريم الجلاصي", "هدى الماجري", "ريان الغربي", "لينا الشابي",
+            "فراس بن عمر", "تقوى العبيدي"
+        )
+        students5A.forEachIndexed { index, name ->
+            val numStr = (index + 1).toString().padStart(3, '0')
+            val code = "HANAN-5A-$numStr"
+            addStudent(name, class5A.id, "الخامسة أ", "5A", code)
+        }
+
+        val students5B = listOf(
+            "حنان السالمي", "آدم الرقيق", "سارة العياري", "مالك بن يوسف", "نور الهدى الكعبي",
+            "سيف العابدين بن علي", "آمنة الجبالي", "مروان التومي", "إسراء العلوي", "يوسف مرزوق",
+            "رقية السعدي", "أنس بن رمضان", "لميس الطرابلسي", "مهدي بن سالم", "مريم القاسمي",
+            "أيوب الفقيه", "سيرين الغربي", "حمزة بن محمود", "ندى الزواري", "وليد الشابي",
+            "جودي الهمامي", "خليل العبيدي"
+        )
+        students5B.forEachIndexed { index, name ->
+            val numStr = (index + 1).toString().padStart(3, '0')
+            val code = "HANAN-5B-$numStr"
+            addStudent(name, class5B.id, "الخامسة ب", "5B", code)
+        }
+        
+        return true // Data was created
     }
 }

@@ -27,8 +27,15 @@ fun TeacherDashboardScreen(
     val classes by firestoreRepository.getClasses().collectAsState(initial = emptyList())
     var showAddDialog by remember { mutableStateOf(false) }
 
+    var showSnackbar by remember { mutableStateOf(false) }
+    var snackbarMessage by remember { mutableStateOf("") }
+
     LaunchedEffect(Unit) {
-        firestoreRepository.initializeDummyData()
+        val created = firestoreRepository.seedDemoDataIfNeeded()
+        if (created) {
+            snackbarMessage = "تم إنشاء القوائم التجريبية بنجاح"
+            showSnackbar = true
+        }
     }
 
     Scaffold(
@@ -37,15 +44,37 @@ fun TeacherDashboardScreen(
                 title = { Text("لوحة تحكم المعلمة") },
                 actions = {
                     TextButton(onClick = {
-                        coroutineScope.launch { firestoreRepository.initializeDummyData(force = true) }
+                        coroutineScope.launch {
+                            val created = firestoreRepository.seedDemoDataIfNeeded()
+                            snackbarMessage = if (created) {
+                                "تم إنشاء القوائم التجريبية بنجاح"
+                            } else {
+                                "القوائم التجريبية موجودة مسبقاً"
+                            }
+                            showSnackbar = true
+                        }
                     }) {
-                        Text("إعادة تهيئة البيانات", color = MaterialTheme.colorScheme.primary)
+                        Text("إنشاء القوائم التجريبية", color = MaterialTheme.colorScheme.primary)
                     }
                     TextButton(onClick = onLogout) {
                         Text("خروج", color = MaterialTheme.colorScheme.error)
                     }
                 }
             )
+        },
+        snackbarHost = {
+            if (showSnackbar) {
+                Snackbar(
+                    action = {
+                        TextButton(onClick = { showSnackbar = false }) {
+                            Text("حسناً")
+                        }
+                    },
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(snackbarMessage)
+                }
+            }
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
