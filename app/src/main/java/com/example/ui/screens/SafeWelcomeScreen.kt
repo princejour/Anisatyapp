@@ -34,9 +34,9 @@ fun SafeWelcomeScreen(onTeacherClick: () -> Unit, onParentClick: () -> Unit) {
     ) {
         Spacer(modifier = Modifier.height(54.dp))
         Image(
-            painter = painterResource(id = R.drawable.launcher_teacher),
+            painter = painterResource(id = R.drawable.app_icon),
             contentDescription = null,
-            contentScale = ContentScale.Crop,
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .size(96.dp)
                 .clip(RoundedCornerShape(24.dp))
@@ -61,12 +61,13 @@ fun SafeWelcomeScreen(onTeacherClick: () -> Unit, onParentClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = painterResource(id = R.drawable.hero_teacher),
+                painter = painterResource(id = R.drawable.teacher_illustration),
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .padding(8.dp)
             )
             Text(
                 "مرحباً بك في تطبيقك الخاص.\nيرجى اختيار نوع الدخول للمتابعة.",
@@ -78,9 +79,9 @@ fun SafeWelcomeScreen(onTeacherClick: () -> Unit, onParentClick: () -> Unit) {
             )
         }
         Spacer(modifier = Modifier.weight(1f))
-        EntryRow("دخول المعلمة", true, R.drawable.btn_teacher, onTeacherClick)
+        EntryRow("دخول المعلمة", true, R.drawable.teacher_badge, onTeacherClick)
         Spacer(modifier = Modifier.height(12.dp))
-        EntryRow("دخول الولي", false, R.drawable.btn_parents, onParentClick)
+        EntryRow("دخول الولي", false, R.drawable.parents_badge, onParentClick)
         Spacer(modifier = Modifier.height(16.dp))
         Text("جميع الحقوق محفوظة للمعلمة حنان © 2024", fontSize = 10.sp, color = Color(0xFF938F99), fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(36.dp))
@@ -114,7 +115,7 @@ private fun EntryRow(title: String, filled: Boolean, imageRes: Int, action: () -
                 Image(
                     painter = painterResource(id = imageRes),
                     contentDescription = null,
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize()
                 )
             }
