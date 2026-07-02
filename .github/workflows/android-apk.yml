@@ -31,7 +31,9 @@ jobs:
         gradle wrapper --gradle-version 9.3.1
 
     - name: Generate image assets
-      run: python3 scripts/generate_image_assets.py
+      run: |
+        python3 scripts/generate_image_assets.py
+        sed -i 's/@drawable\/app_icon/@drawable\/launcher_teacher/g' app/src/main/AndroidManifest.xml
 
     - name: Generate Debug Keystore
       run: |
