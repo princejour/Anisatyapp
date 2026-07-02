@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import coil.compose.AsyncImage
+
 @Composable
 fun WelcomeScreen(
     onTeacherClick: () -> Unit,
@@ -141,10 +144,12 @@ fun WelcomeScreen(
                             .border(1.dp, Color(0xFFF3EDF7), RoundedCornerShape(40.dp)),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.hero_teacher),
+                        AsyncImage(
+                            model = R.drawable.hero_teacher,
                             contentDescription = "صورة ترحيبية",
                             contentScale = ContentScale.Crop,
+                            error = rememberVectorPainter(Icons.Filled.AccountCircle),
+                            fallback = rememberVectorPainter(Icons.Filled.AccountCircle),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
@@ -204,10 +209,12 @@ fun WelcomeScreen(
                                         .clip(CircleShape)
                                         .border(1.dp, Color.White.copy(alpha = 0.5f), CircleShape)
                                 ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.btn_teacher),
+                                    AsyncImage(
+                                        model = R.drawable.btn_teacher,
                                         contentDescription = null,
                                         contentScale = ContentScale.Crop,
+                                        error = rememberVectorPainter(Icons.Filled.AccountBox),
+                                        fallback = rememberVectorPainter(Icons.Filled.AccountBox),
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
@@ -255,10 +262,12 @@ fun WelcomeScreen(
                                         .clip(CircleShape)
                                         .border(1.dp, Color(0xFF6750A4).copy(alpha = 0.2f), CircleShape)
                                 ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.btn_parents),
+                                    AsyncImage(
+                                        model = R.drawable.btn_parents,
                                         contentDescription = null,
                                         contentScale = ContentScale.Crop,
+                                        error = rememberVectorPainter(Icons.Filled.Person),
+                                        fallback = rememberVectorPainter(Icons.Filled.Person),
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
