@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "123456789012",
-    "project_id": "dummy-project",
-    "storage_bucket": "dummy-project.appspot.com"
+    "project_number": "351583558698",
+    "project_id": "anisatyapp",
+    "storage_bucket": "anisatyapp.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:351583558698:android:bea34c02d61f5484357753",
         "android_client_info": {
           "package_name": "com.aistudio.anisti.hxkqpz"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "dummy_api_key"
+          "current_key": "AIzaSyD-SSinjlOQfNfVO_eolIVuJOLBTHcAycE"
         }
       ],
       "services": {
