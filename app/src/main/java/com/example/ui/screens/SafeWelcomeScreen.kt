@@ -34,9 +34,9 @@ fun SafeWelcomeScreen(onTeacherClick: () -> Unit, onParentClick: () -> Unit) {
     ) {
         Spacer(modifier = Modifier.height(54.dp))
         Image(
-            painter = painterResource(id = R.drawable.app_icon),
+            painter = painterResource(id = R.drawable.launcher_teacher),
             contentDescription = null,
-            contentScale = ContentScale.Fit,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(96.dp)
                 .clip(RoundedCornerShape(24.dp))
@@ -61,13 +61,12 @@ fun SafeWelcomeScreen(onTeacherClick: () -> Unit, onParentClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = painterResource(id = R.drawable.teacher_illustration),
+                painter = painterResource(id = R.drawable.hero_teacher),
                 contentDescription = null,
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(8.dp)
             )
             Text(
                 "مرحباً بك في تطبيقك الخاص.\nيرجى اختيار نوع الدخول للمتابعة.",
@@ -79,7 +78,7 @@ fun SafeWelcomeScreen(onTeacherClick: () -> Unit, onParentClick: () -> Unit) {
             )
         }
         Spacer(modifier = Modifier.weight(1f))
-        EntryRow("دخول المعلمة", true, R.drawable.teacher_badge, onTeacherClick)
+        EntryRow("دخول المعلمة", true, R.drawable.launcher_teacher, onTeacherClick)
         Spacer(modifier = Modifier.height(12.dp))
         EntryRow("دخول الولي", false, R.drawable.parents_badge, onParentClick)
         Spacer(modifier = Modifier.height(16.dp))
@@ -115,7 +114,7 @@ private fun EntryRow(title: String, filled: Boolean, imageRes: Int, action: () -
                 Image(
                     painter = painterResource(id = imageRes),
                     contentDescription = null,
-                    contentScale = ContentScale.Fit,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
             }
