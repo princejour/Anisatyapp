@@ -144,12 +144,10 @@ fun WelcomeScreen(
                             .border(1.dp, Color(0xFFF3EDF7), RoundedCornerShape(40.dp)),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        AsyncImage(
-                            model = R.drawable.hero_teacher,
+                        Image(
+                            painter = painterResource(id = R.drawable.hero_teacher),
                             contentDescription = "صورة ترحيبية",
                             contentScale = ContentScale.Crop,
-                            error = rememberVectorPainter(Icons.Filled.AccountCircle),
-                            fallback = rememberVectorPainter(Icons.Filled.AccountCircle),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
@@ -209,12 +207,10 @@ fun WelcomeScreen(
                                         .clip(CircleShape)
                                         .border(1.dp, Color.White.copy(alpha = 0.5f), CircleShape)
                                 ) {
-                                    AsyncImage(
-                                        model = R.drawable.btn_teacher,
+                                    Image(
+                                        painter = painterResource(id = R.drawable.btn_teacher),
                                         contentDescription = null,
                                         contentScale = ContentScale.Crop,
-                                        error = rememberVectorPainter(Icons.Filled.AccountBox),
-                                        fallback = rememberVectorPainter(Icons.Filled.AccountBox),
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
@@ -262,12 +258,10 @@ fun WelcomeScreen(
                                         .clip(CircleShape)
                                         .border(1.dp, Color(0xFF6750A4).copy(alpha = 0.2f), CircleShape)
                                 ) {
-                                    AsyncImage(
-                                        model = R.drawable.btn_parents,
+                                    Image(
+                                        painter = painterResource(id = R.drawable.btn_parents),
                                         contentDescription = null,
                                         contentScale = ContentScale.Crop,
-                                        error = rememberVectorPainter(Icons.Filled.Person),
-                                        fallback = rememberVectorPainter(Icons.Filled.Person),
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
