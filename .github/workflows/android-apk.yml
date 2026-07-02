@@ -30,6 +30,9 @@ jobs:
         rm -f gradle/wrapper/gradle-wrapper.jar
         gradle wrapper --gradle-version 9.3.1
 
+    - name: Generate image assets
+      run: python3 scripts/generate_image_assets.py
+
     - name: Generate Debug Keystore
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
