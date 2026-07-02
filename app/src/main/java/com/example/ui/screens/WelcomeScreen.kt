@@ -144,10 +144,10 @@ fun WelcomeScreen(
                             .border(1.dp, Color(0xFFF3EDF7), RoundedCornerShape(40.dp)),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.AccountCircle,
+                        Image(
+                            painter = painterResource(id = R.drawable.hero_teacher),
                             contentDescription = "صورة ترحيبية",
-                            tint = Color(0xFF6750A4),
+                            contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
@@ -207,11 +207,11 @@ fun WelcomeScreen(
                                         .clip(CircleShape)
                                         .border(1.dp, Color.White.copy(alpha = 0.5f), CircleShape)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.AccountBox,
+                                    Image(
+                                        painter = painterResource(id = R.drawable.btn_teacher),
                                         contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.fillMaxSize().padding(4.dp)
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
@@ -258,11 +258,11 @@ fun WelcomeScreen(
                                         .clip(CircleShape)
                                         .border(1.dp, Color(0xFF6750A4).copy(alpha = 0.2f), CircleShape)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Person,
+                                    Image(
+                                        painter = painterResource(id = R.drawable.btn_parents),
                                         contentDescription = null,
-                                        tint = Color(0xFF6750A4),
-                                        modifier = Modifier.fillMaxSize().padding(4.dp)
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
