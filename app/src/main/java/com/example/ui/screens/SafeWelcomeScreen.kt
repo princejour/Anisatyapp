@@ -34,9 +34,12 @@ fun SafeWelcomeScreen(onTeacherClick: () -> Unit, onParentClick: () -> Unit) {
     ) {
         Spacer(modifier = Modifier.height(54.dp))
         Image(
-            painter = painterResource(id = R.drawable.app_icon),
+            painter = painterResource(id = R.drawable.launcher_teacher),
             contentDescription = null,
-            modifier = Modifier.size(96.dp)
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(96.dp)
+                .clip(RoundedCornerShape(24.dp))
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text("أنيستي حنان", fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1C1B1F))
@@ -58,13 +61,12 @@ fun SafeWelcomeScreen(onTeacherClick: () -> Unit, onParentClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = painterResource(id = R.drawable.teacher_illustration),
+                painter = painterResource(id = R.drawable.hero_teacher),
                 contentDescription = null,
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(8.dp)
             )
             Text(
                 "مرحباً بك في تطبيقك الخاص.\nيرجى اختيار نوع الدخول للمتابعة.",
@@ -76,9 +78,9 @@ fun SafeWelcomeScreen(onTeacherClick: () -> Unit, onParentClick: () -> Unit) {
             )
         }
         Spacer(modifier = Modifier.weight(1f))
-        EntryRow("دخول المعلمة", true, R.drawable.teacher_badge, onTeacherClick)
+        EntryRow("دخول المعلمة", true, R.drawable.btn_teacher, onTeacherClick)
         Spacer(modifier = Modifier.height(12.dp))
-        EntryRow("دخول الولي", false, R.drawable.parents_badge, onParentClick)
+        EntryRow("دخول الولي", false, R.drawable.btn_parents, onParentClick)
         Spacer(modifier = Modifier.height(16.dp))
         Text("جميع الحقوق محفوظة للمعلمة حنان © 2024", fontSize = 10.sp, color = Color(0xFF938F99), fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(36.dp))
@@ -109,7 +111,12 @@ private fun EntryRow(title: String, filled: Boolean, imageRes: Int, action: () -
                     .background(Color.White),
                 contentAlignment = Alignment.Center
             ) {
-                Image(painter = painterResource(id = imageRes), contentDescription = null, modifier = Modifier.fillMaxSize())
+                Image(
+                    painter = painterResource(id = imageRes),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(title, color = fg, fontSize = 18.sp, fontWeight = FontWeight.Bold)
