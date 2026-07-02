@@ -88,7 +88,7 @@ class FirestoreRepository {
     }
 
     // --- Parent side ---
-    suspend fun linkParent(code: String, deviceToken: String): Result<Student> {
+    suspend fun linkParent(code: String, deviceToken: String? = null): Result<Student> {
         return try {
             val snapshot = db.collection("students")
                 .whereEqualTo("parentCode", code)
@@ -100,11 +100,13 @@ class FirestoreRepository {
                 val student = doc.toObject(Student::class.java)!!
                 
                 // Update link status
+                val updates = mutableMapOf<String, Any>("isLinked" to true)
+                if (deviceToken != null) {
+                    updates["parentDeviceId"] = deviceToken
+                }
+                
                 db.collection("students").document(student.id)
-                    .update(
-                        "isLinked", true,
-                        "parentDeviceId", deviceToken
-                    ).await()
+                    .update(updates).await()
                     
                 Result.success(student)
             } else {
@@ -112,6 +114,14 @@ class FirestoreRepository {
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    suspend fun updateParentFcmToken(studentId: String, deviceToken: String) {
+        try {
+            db.collection("students").document(studentId).update("parentDeviceId", deviceToken).await()
+        } catch (e: Exception) {
+            // Ignore failure in background
         }
     }
 

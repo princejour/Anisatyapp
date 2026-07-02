@@ -78,21 +78,31 @@ fun ParentLoginScreen(
                     errorMessage = null
                     coroutineScope.launch {
                         try {
-                            // Get FCM Token
-                            val token = FirebaseMessaging.getInstance().token.await()
-                            
-                            val result = firestoreRepository.linkParent(code.trim(), token)
+                            val result = firestoreRepository.linkParent(code.trim(), null)
                             if (result.isSuccess) {
                                 val student = result.getOrNull()!!
                                 prefsRepository.saveUserRole("parent")
                                 prefsRepository.saveParentCode(student.parentCode)
-                                prefsRepository.saveFcmToken(token)
+                                
+                                // Fetch token in background
+                                kotlinx.coroutines.GlobalScope.launch {
+                                    try {
+                                        val token = kotlinx.coroutines.withTimeout(5000) {
+                                            FirebaseMessaging.getInstance().token.await()
+                                        }
+                                        prefsRepository.saveFcmToken(token)
+                                        firestoreRepository.updateParentFcmToken(student.id, token)
+                                    } catch (e: Exception) {
+                                        // Ignore
+                                    }
+                                }
+                                
                                 onLoginSuccess(student.id)
                             } else {
-                                errorMessage = "الكود غير صحيح، تأكد من المعلمة."
+                                errorMessage = result.exceptionOrNull()?.message ?: "الكود غير صحيح، تأكد من المعلمة."
                             }
                         } catch (e: Exception) {
-                            errorMessage = "حدث خطأ أثناء الاتصال."
+                            errorMessage = e.message ?: "حدث خطأ أثناء الاتصال."
                         } finally {
                             isLoading = false
                         }
