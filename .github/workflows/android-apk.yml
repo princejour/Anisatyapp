@@ -32,7 +32,17 @@ jobs:
 
     - name: Generate image assets
       run: |
-        python3 scripts/generate_image_assets.py
+        python3 - <<'PY'
+        import base64
+        import runpy
+        original_b64decode = base64.b64decode
+        def safe_b64decode(data):
+            if isinstance(data, str):
+                data = data + "=" * (-len(data) % 4)
+            return original_b64decode(data)
+        base64.b64decode = safe_b64decode
+        runpy.run_path("scripts/generate_image_assets.py", run_name="__main__")
+        PY
         sed -i 's/@drawable\/app_icon/@drawable\/launcher_teacher/g' app/src/main/AndroidManifest.xml
 
     - name: Generate Debug Keystore
