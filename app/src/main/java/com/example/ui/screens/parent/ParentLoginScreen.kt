@@ -84,25 +84,30 @@ fun ParentLoginScreen(
                                 prefsRepository.saveUserRole("parent")
                                 prefsRepository.saveParentCode(student.parentCode)
                                 
-                                // Fetch token in background
+                                // Call onLoginSuccess immediately before waiting for token
+                                isLoading = false
+                                onLoginSuccess(student.id)
+                                
+                                // Fetch token in background safely
                                 kotlinx.coroutines.GlobalScope.launch {
                                     try {
-                                        val token = kotlinx.coroutines.withTimeout(5000) {
-                                            FirebaseMessaging.getInstance().token.await()
+                                        val token = kotlinx.coroutines.withTimeout(5000L) {
+                                            com.google.firebase.messaging.FirebaseMessaging.getInstance().token.await()
                                         }
-                                        prefsRepository.saveFcmToken(token)
-                                        firestoreRepository.updateParentFcmToken(student.id, token)
+                                        if (!token.isNullOrEmpty()) {
+                                            prefsRepository.saveFcmToken(token)
+                                            firestoreRepository.updateParentFcmToken(student.id, token)
+                                        }
                                     } catch (e: Exception) {
-                                        // Ignore
+                                        e.printStackTrace()
                                     }
                                 }
-                                
-                                onLoginSuccess(student.id)
+                                return@launch
                             } else {
-                                errorMessage = result.exceptionOrNull()?.message ?: "الكود غير صحيح، تأكد من المعلمة."
+                                errorMessage = result.exceptionOrNull()?.localizedMessage ?: "الكود غير صحيح، تأكد من المعلمة."
                             }
                         } catch (e: Exception) {
-                            errorMessage = e.message ?: "حدث خطأ أثناء الاتصال."
+                            errorMessage = e.localizedMessage ?: "حدث خطأ أثناء الاتصال."
                         } finally {
                             isLoading = false
                         }
