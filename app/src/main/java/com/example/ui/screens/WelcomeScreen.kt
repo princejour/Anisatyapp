@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,10 +24,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 
 @Composable
 fun WelcomeScreen(
@@ -131,28 +135,34 @@ fun WelcomeScreen(
                     Column(
                         modifier = Modifier
                             .size(280.dp) // approx max-w-xs aspect-square
-                            .shadow(1.dp, RoundedCornerShape(40.dp))
-                            .background(Color.White, RoundedCornerShape(40.dp))
-                            .border(1.dp, Color(0xFFF3EDF7), RoundedCornerShape(40.dp))
-                            .padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                            .shadow(2.dp, RoundedCornerShape(40.dp))
+                            .clip(RoundedCornerShape(40.dp))
+                            .background(Color.White)
+                            .border(1.dp, Color(0xFFF3EDF7), RoundedCornerShape(40.dp)),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.AccountCircle,
-                            contentDescription = null,
-                            tint = Color(0xFF6750A4).copy(alpha = 0.1f),
+                        Image(
+                            painter = painterResource(id = R.drawable.hero_teacher),
+                            contentDescription = "صورة ترحيبية",
+                            contentScale = ContentScale.Crop,
                             modifier = Modifier
-                                .size(80.dp)
-                                .padding(bottom = 16.dp)
+                                .fillMaxWidth()
+                                .weight(1f)
                         )
-                        Text(
-                            text = "مرحباً بك في تطبيقك الخاص.\n\nيرجى اختيار نوع الدخول للمتابعة.",
-                            fontSize = 14.sp,
-                            color = Color(0xFF79747E),
-                            textAlign = TextAlign.Center,
-                            lineHeight = 24.sp
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "مرحباً بك في تطبيقك الخاص.\nيرجى اختيار نوع الدخول للمتابعة.",
+                                fontSize = 14.sp,
+                                color = Color(0xFF79747E),
+                                textAlign = TextAlign.Center,
+                                lineHeight = 24.sp
+                            )
+                        }
                     }
                 }
 
@@ -190,17 +200,15 @@ fun WelcomeScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .background(
-                                            Color.White.copy(alpha = 0.2f),
-                                            RoundedCornerShape(8.dp)
-                                        )
-                                        .padding(8.dp)
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .border(1.dp, Color.White.copy(alpha = 0.5f), CircleShape)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.AccountBox,
+                                    Image(
+                                        painter = painterResource(id = R.drawable.btn_teacher),
                                         contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(24.dp)
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
@@ -243,17 +251,15 @@ fun WelcomeScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .background(
-                                            Color(0xFFF3EDF7),
-                                            RoundedCornerShape(8.dp)
-                                        )
-                                        .padding(8.dp)
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .border(1.dp, Color(0xFF6750A4).copy(alpha = 0.2f), CircleShape)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Person,
+                                    Image(
+                                        painter = painterResource(id = R.drawable.btn_parents),
                                         contentDescription = null,
-                                        tint = Color(0xFF6750A4),
-                                        modifier = Modifier.size(24.dp)
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
