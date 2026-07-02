@@ -10,9 +10,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.repository.FirestoreRepository
 import com.example.repository.PreferencesRepository
-import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,60 +53,50 @@ fun ParentLoginScreen(
                 style = MaterialTheme.typography.titleLarge
             )
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             OutlinedTextField(
                 value = code,
                 onValueChange = { code = it },
                 label = { Text("أدخل كود التلميذ") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                enabled = !isLoading
             )
-            
+
             if (errorMessage != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error)
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             Button(
                 onClick = {
-                    if (code.isEmpty()) {
+                    val cleanCode = code.trim().replace(" ", "").uppercase(Locale.ROOT)
+                    if (cleanCode.isEmpty()) {
                         errorMessage = "الرجاء إدخال الكود"
                         return@Button
                     }
+
                     isLoading = true
                     errorMessage = null
+
                     coroutineScope.launch {
                         try {
-                            val result = firestoreRepository.linkParent(code.trim(), null)
-                            if (result.isSuccess) {
-                                val student = result.getOrNull()!!
+                            val student = withTimeout(12000L) {
+                                firestoreRepository.getStudentByCode(cleanCode)
+                            }
+
+                            if (student == null) {
+                                errorMessage = "الكود غير صحيح، تأكد من المعلمة."
+                            } else {
                                 prefsRepository.saveUserRole("parent")
                                 prefsRepository.saveParentCode(student.parentCode)
-                                
-                                // Call onLoginSuccess immediately before waiting for token
                                 isLoading = false
                                 onLoginSuccess(student.id)
-                                
-                                // Fetch token in background safely
-                                kotlinx.coroutines.GlobalScope.launch {
-                                    try {
-                                        val token = kotlinx.coroutines.withTimeout(5000L) {
-                                            com.google.firebase.messaging.FirebaseMessaging.getInstance().token.await()
-                                        }
-                                        if (!token.isNullOrEmpty()) {
-                                            prefsRepository.saveFcmToken(token)
-                                            firestoreRepository.updateParentFcmToken(student.id, token)
-                                        }
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                    }
-                                }
-                                return@launch
-                            } else {
-                                errorMessage = result.exceptionOrNull()?.localizedMessage ?: "الكود غير صحيح، تأكد من المعلمة."
                             }
+                        } catch (e: TimeoutCancellationException) {
+                            errorMessage = "الاتصال بطيء. أعد المحاولة."
                         } catch (e: Exception) {
                             errorMessage = e.localizedMessage ?: "حدث خطأ أثناء الاتصال."
                         } finally {
@@ -119,7 +110,10 @@ fun ParentLoginScreen(
                 enabled = !isLoading
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
                 } else {
                     Text("ربط التطبيق بالتلميذ")
                 }
