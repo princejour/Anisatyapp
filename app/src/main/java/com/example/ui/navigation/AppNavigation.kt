@@ -13,7 +13,7 @@ import androidx.navigation.toRoute
 import com.example.repository.AuthRepository
 import com.example.repository.FirestoreRepository
 import com.example.repository.PreferencesRepository
-import com.example.ui.screens.WelcomeScreen
+import com.example.ui.screens.SafeWelcomeScreen
 import com.example.ui.screens.parent.ParentDashboardScreen
 import com.example.ui.screens.parent.ParentLoginScreen
 import com.example.ui.screens.teacher.ClassDetailsScreen
@@ -38,10 +38,8 @@ fun AppNavigation() {
     val prefsRepo = remember { PreferencesRepository(context) }
     val authRepo = remember { AuthRepository(prefsRepo) }
     val firestoreRepo = remember { FirestoreRepository() }
-    
+
     val userRole by prefsRepo.userRoleFlow.collectAsState(initial = null)
-    val parentCode by prefsRepo.parentCodeFlow.collectAsState(initial = null)
-    
     val coroutineScope = rememberCoroutineScope()
 
     NavHost(
@@ -49,7 +47,7 @@ fun AppNavigation() {
         startDestination = WelcomeRoute
     ) {
         composable<WelcomeRoute> {
-            WelcomeScreen(
+            SafeWelcomeScreen(
                 onTeacherClick = {
                     if (userRole == "teacher") {
                         navController.navigate(TeacherDashboardRoute) {
@@ -64,7 +62,7 @@ fun AppNavigation() {
                 }
             )
         }
-        
+
         composable<TeacherLoginRoute> {
             TeacherLoginScreen(
                 authRepository = authRepo,
@@ -76,7 +74,7 @@ fun AppNavigation() {
                 onBack = { navController.popBackStack() }
             )
         }
-        
+
         composable<TeacherDashboardRoute> {
             TeacherDashboardScreen(
                 firestoreRepository = firestoreRepo,
@@ -93,7 +91,7 @@ fun AppNavigation() {
                 }
             )
         }
-        
+
         composable<ClassDetailsRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<ClassDetailsRoute>()
             ClassDetailsScreen(
@@ -105,7 +103,7 @@ fun AppNavigation() {
                 onBack = { navController.popBackStack() }
             )
         }
-        
+
         composable<StudentDetailsRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<StudentDetailsRoute>()
             StudentDetailsScreen(
@@ -114,7 +112,7 @@ fun AppNavigation() {
                 onBack = { navController.popBackStack() }
             )
         }
-        
+
         composable<ParentLoginRoute> {
             ParentLoginScreen(
                 firestoreRepository = firestoreRepo,
@@ -127,7 +125,7 @@ fun AppNavigation() {
                 onBack = { navController.popBackStack() }
             )
         }
-        
+
         composable<ParentDashboardRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<ParentDashboardRoute>()
             ParentDashboardScreen(
