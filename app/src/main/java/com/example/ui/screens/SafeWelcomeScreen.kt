@@ -80,7 +80,7 @@ fun SafeWelcomeScreen(onTeacherClick: () -> Unit, onParentClick: () -> Unit) {
         Spacer(modifier = Modifier.weight(1f))
         EntryRow("دخول المعلمة", true, R.drawable.launcher_teacher, onTeacherClick)
         Spacer(modifier = Modifier.height(12.dp))
-        EntryRow("دخول الولي", false, R.drawable.btn_parents, onParentClick)
+        EntryRow("دخول الولي", false, R.drawable.parents_badge, onParentClick)
         Spacer(modifier = Modifier.height(16.dp))
         Text("جميع الحقوق محفوظة للمعلمة حنان © 2024", fontSize = 10.sp, color = Color(0xFF938F99), fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(36.dp))
