@@ -21,7 +21,9 @@ import com.example.models.Student
 import com.example.repository.FirestoreRepository
 import com.example.ui.navigation.ClassDetailsRoute
 import com.example.util.CsvParser
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,9 +46,33 @@ fun ClassDetailsScreen(
     val csvLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             coroutineScope.launch {
-                val names = CsvParser.parseStudentsFromCsv(context, it)
-                names.forEach { name ->
-                    firestoreRepository.addStudent(name, route.classId, route.className, route.classGroup)
+                val importedList = CsvParser.parseStudentImport(context, it, route.className, route.classGroup)
+                if (importedList.names.isNotEmpty()) {
+                    val db = FirebaseFirestore.getInstance()
+                    val classSnapshot = db.collection("classes")
+                        .whereEqualTo("name", importedList.className)
+                        .get()
+                        .await()
+
+                    val targetClassId = if (!classSnapshot.isEmpty) {
+                        classSnapshot.documents.first().id
+                    } else {
+                        val newClass = db.collection("classes").document()
+                        newClass.set(
+                            mapOf(
+                                "id" to newClass.id,
+                                "name" to importedList.className,
+                                "level" to importedList.level,
+                                "group" to importedList.group,
+                                "createdAt" to System.currentTimeMillis()
+                            )
+                        ).await()
+                        newClass.id
+                    }
+
+                    importedList.names.forEach { name ->
+                        firestoreRepository.addStudent(name, targetClassId, importedList.className, importedList.group)
+                    }
                 }
             }
         }
