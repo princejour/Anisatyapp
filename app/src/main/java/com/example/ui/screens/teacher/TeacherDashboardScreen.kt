@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,7 +24,6 @@ fun TeacherDashboardScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val classes by firestoreRepository.getClasses().collectAsState(initial = emptyList())
-    var showAddDialog by remember { mutableStateOf(false) }
 
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
@@ -75,11 +73,6 @@ fun TeacherDashboardScreen(
                     Text(snackbarMessage)
                 }
             }
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "إضافة قسم")
-            }
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
@@ -107,19 +100,6 @@ fun TeacherDashboardScreen(
                 }
             }
         }
-    }
-
-    if (showAddDialog) {
-        AddClassDialog(
-            onDismiss = { showAddDialog = false },
-            onAdd = { level, group ->
-                coroutineScope.launch {
-                    val name = "$level $group"
-                    firestoreRepository.createClass(name, level, group)
-                    showAddDialog = false
-                }
-            }
-        )
     }
 }
 
@@ -153,49 +133,4 @@ fun ClassCard(
             }
         }
     }
-}
-
-@Composable
-fun AddClassDialog(
-    onDismiss: () -> Unit,
-    onAdd: (String, String) -> Unit
-) {
-    var level by remember { mutableStateOf("") }
-    var group by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("إضافة قسم جديد") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = level,
-                    onValueChange = { level = it },
-                    label = { Text("المستوى (مثال: الخامسة)") },
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = group,
-                    onValueChange = { group = it },
-                    label = { Text("الفوج (مثال: أ)") },
-                    singleLine = true
-                )
-            }
-        },
-        confirmButton = {
-            Button(onClick = {
-                if (level.isNotBlank() && group.isNotBlank()) {
-                    onAdd(level, group)
-                }
-            }) {
-                Text("إضافة")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("إلغاء")
-            }
-        }
-    )
 }
