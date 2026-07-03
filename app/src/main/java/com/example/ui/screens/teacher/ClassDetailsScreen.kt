@@ -47,7 +47,12 @@ fun ClassDetailsScreen(
         uri?.let {
             coroutineScope.launch {
                 val importedList = CsvParser.parseStudentImport(context, it, route.className, route.classGroup)
-                if (importedList.names.isNotEmpty()) {
+                val importedNames = importedList.names
+                    .map { name -> normalizeImportedStudentName(name) }
+                    .filter { name -> name.isNotBlank() && !isCorruptedImportedStudentName(name) }
+                    .distinctBy { name -> normalizeImportedStudentName(name) }
+
+                if (importedNames.isNotEmpty()) {
                     val db = FirebaseFirestore.getInstance()
                     val classSnapshot = db.collection("classes")
                         .whereEqualTo("name", importedList.className)
@@ -70,8 +75,26 @@ fun ClassDetailsScreen(
                         newClass.id
                     }
 
-                    importedList.names.forEach { name ->
-                        firestoreRepository.addStudent(name, targetClassId, importedList.className, importedList.group)
+                    val existingSnapshot = db.collection("students")
+                        .whereEqualTo("classId", targetClassId)
+                        .get()
+                        .await()
+                    val existingNames = mutableSetOf<String>()
+
+                    existingSnapshot.documents.forEach { doc ->
+                        val existingName = doc.getString("name").orEmpty()
+                        if (isCorruptedImportedStudentName(existingName)) {
+                            doc.reference.delete().await()
+                        } else {
+                            existingNames.add(normalizeImportedStudentName(existingName))
+                        }
+                    }
+
+                    importedNames.forEach { name ->
+                        val normalizedName = normalizeImportedStudentName(name)
+                        if (existingNames.add(normalizedName)) {
+                            firestoreRepository.addStudent(name, targetClassId, importedList.className, importedList.group)
+                        }
                     }
                 }
             }
@@ -196,6 +219,20 @@ fun ClassDetailsScreen(
             }
         )
     }
+}
+
+private fun normalizeImportedStudentName(value: String): String {
+    return value.replace(Regex("\\s+"), " ").trim()
+}
+
+private fun isCorruptedImportedStudentName(value: String): Boolean {
+    val text = value.trim()
+    val lower = text.lowercase()
+    if (text.isBlank()) return true
+    if (text.contains('�')) return true
+    if (text.length > 120) return true
+    if (lower.startsWith("pk") || lower.contains("workbook") || lower.contains("xl/") || lower.contains(".xml")) return true
+    return false
 }
 
 @Composable
