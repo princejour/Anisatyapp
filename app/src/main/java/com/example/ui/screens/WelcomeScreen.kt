@@ -285,7 +285,7 @@ fun WelcomeScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "جميع الحقوق محفوظة للمعلمة حنان © 2024",
+                        text = "جميع الحقوق محفوظة للمعلمة حنان © 2026",
                         fontSize = 10.sp,
                         color = Color(0xFF938F99),
                         fontWeight = FontWeight.Bold,
