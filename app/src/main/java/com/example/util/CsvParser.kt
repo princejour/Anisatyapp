@@ -145,8 +145,8 @@ object CsvParser {
     }
 
     private fun parseSharedStrings(xml: String): List<String> {
-        val siRegex = Regex("<si[\\s\\S]*?</si>")
-        val tRegex = Regex("<t[^>]*>([\\s\\S]*?)</t>")
+        val siRegex = Regex("<(?:[A-Za-z0-9_]+:)?si[\\s\\S]*?</(?:[A-Za-z0-9_]+:)?si>")
+        val tRegex = Regex("<(?:[A-Za-z0-9_]+:)?t[^>]*>([\\s\\S]*?)</(?:[A-Za-z0-9_]+:)?t>")
         return siRegex.findAll(xml).map { si ->
             tRegex.findAll(si.value)
                 .joinToString("") { unescapeXml(it.groupValues[1]) }
@@ -156,10 +156,10 @@ object CsvParser {
 
     private fun parseWorksheetRows(xml: String, sharedStrings: List<String>): List<List<String>> {
         val rows = mutableListOf<List<String>>()
-        val rowRegex = Regex("<row[\\s\\S]*?</row>")
-        val cellRegex = Regex("<c([^>]*)>([\\s\\S]*?)</c>")
-        val valueRegex = Regex("<v>([\\s\\S]*?)</v>")
-        val textRegex = Regex("<t[^>]*>([\\s\\S]*?)</t>")
+        val rowRegex = Regex("<(?:[A-Za-z0-9_]+:)?row[\\s\\S]*?</(?:[A-Za-z0-9_]+:)?row>")
+        val cellRegex = Regex("<(?:[A-Za-z0-9_]+:)?c([^>]*)>([\\s\\S]*?)</(?:[A-Za-z0-9_]+:)?c>")
+        val valueRegex = Regex("<(?:[A-Za-z0-9_]+:)?v[^>]*>([\\s\\S]*?)</(?:[A-Za-z0-9_]+:)?v>")
+        val textRegex = Regex("<(?:[A-Za-z0-9_]+:)?t[^>]*>([\\s\\S]*?)</(?:[A-Za-z0-9_]+:)?t>")
 
         rowRegex.findAll(xml).forEach { rowMatch ->
             val row = cellRegex.findAll(rowMatch.value).map { cell ->
