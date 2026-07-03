@@ -32,10 +32,10 @@ object CsvParser {
     ): StudentImport {
         val displayName = getDisplayName(context, uri)
         val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: ByteArray(0)
-        val rows = if (isXlsx(displayName, bytes)) {
-            parseXlsxRows(bytes)
-        } else {
-            parseTextRows(bytes)
+        val rows = when {
+            isXlsx(displayName, bytes) -> parseXlsxRows(bytes)
+            isOldXls(displayName, bytes) -> parseOldXlsRows(bytes)
+            else -> parseTextRows(bytes)
         }
 
         val classInfo = detectClass(displayName, rows)
@@ -67,6 +67,11 @@ object CsvParser {
             (bytes.size > 4 && bytes[0] == 'P'.code.toByte() && bytes[1] == 'K'.code.toByte())
     }
 
+    private fun isOldXls(displayName: String, bytes: ByteArray): Boolean {
+        return displayName.endsWith(".xls", ignoreCase = true) ||
+            (bytes.size > 8 && bytes[0] == 0xD0.toByte() && bytes[1] == 0xCF.toByte())
+    }
+
     private fun parseTextRows(bytes: ByteArray): List<List<String>> {
         val utf8 = bytes.toString(Charsets.UTF_8)
         val text = if (utf8.count { it == '\uFFFD' } > 3) {
@@ -77,6 +82,15 @@ object CsvParser {
         return text.lineSequence()
             .map { splitDelimitedLine(it) }
             .filter { row -> row.any { it.isNotBlank() } }
+            .toList()
+    }
+
+    private fun parseOldXlsRows(bytes: ByteArray): List<List<String>> {
+        val text = bytes.toString(Charset.forName("UTF-16LE")) + "\n" + bytes.toString(Charset.forName("windows-1256"))
+        return Regex("[\u0600-\u06FF]+(?:\\s+[\u0600-\u06FF]+){0,5}")
+            .findAll(text)
+            .map { listOf(cleanName(it.value)) }
+            .filter { row -> row.first().isNotBlank() }
             .toList()
     }
 
@@ -203,7 +217,7 @@ object CsvParser {
         val lower = text.lowercase()
         if (lower.contains("workbook") || lower.startsWith("pk") || lower.contains("xml")) return false
         val normalized = normalizeArabic(text)
-        val blocked = listOf("الاسم", "اللقب", "الكود", "رمز", "مرتبط", "غير مرتبط", "القسم", "المستوى", "الفوج", "الخامسة", "الرابعة", "الثالثة", "الثانية", "الاولى", "الأولى", "السادسة")
+        val blocked = listOf("الاسم", "اللقب", "الكود", "رمز", "مرتبط", "غير مرتبط", "القسم", "المستوى", "الفوج", "قائمة", "تلميذ", "تلاميذ", "الخامسة", "الرابعة", "الثالثة", "الثانية", "الاولى", "الأولى", "السادسة")
         if (blocked.any { normalized.contains(it) }) return false
         val arabicCount = text.count { it in '\u0600'..'\u06FF' }
         return arabicCount >= 2
