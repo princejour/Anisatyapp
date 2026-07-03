@@ -140,7 +140,8 @@ object CsvParser {
             }
         }
 
-        return sheets.flatMap { parseWorksheetRows(it, sharedStrings) }
+        val parsedRows = sheets.flatMap { parseWorksheetRows(it, sharedStrings) }
+        return parsedRows + sharedStrings.map { listOf(it) }
     }
 
     private fun parseSharedStrings(xml: String): List<String> {
