@@ -7,7 +7,8 @@ data class SchoolClass(
     val name: String = "",
     val level: String = "",
     val group: String = "",
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val source: String = ""
 )
 
 data class Student(
