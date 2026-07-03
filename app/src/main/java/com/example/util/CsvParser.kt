@@ -86,12 +86,27 @@ object CsvParser {
     }
 
     private fun parseOldXlsRows(bytes: ByteArray): List<List<String>> {
-        val text = bytes.toString(Charset.forName("UTF-16LE")) + "\n" + bytes.toString(Charset.forName("windows-1256"))
-        return Regex("[\u0600-\u06FF]+(?:\\s+[\u0600-\u06FF]+){0,5}")
-            .findAll(text)
-            .map { listOf(cleanName(it.value)) }
-            .filter { row -> row.first().isNotBlank() }
-            .toList()
+        val texts = listOf(
+            bytes.toString(Charset.forName("UTF-16LE")),
+            bytes.toString(Charset.forName("UTF-16BE")),
+            bytes.toString(Charset.forName("windows-1256")),
+            bytes.toString(Charsets.UTF_8)
+        )
+        return texts.flatMap { text ->
+            val cleanText = text.replace(0.toChar(), ' ')
+            val cells = cleanText.split(Regex("[\\r\\n\\t,;|]+"))
+                .map { cleanName(it) }
+                .filter { it.isNotBlank() }
+            val arabicCells = Regex("[ء-ي]+(?:\\s+[ء-ي]+){0,3}")
+                .findAll(cleanText)
+                .map { cleanName(it.value) }
+                .filter { it.isNotBlank() }
+                .toList()
+            cells + arabicCells
+        }
+            .filter { isLikelyStudentName(it) || isNameHeader(it) || detectClassFromText(it) != null }
+            .distinctBy { normalizeArabic(it).lowercase() }
+            .map { listOf(it) }
     }
 
     private fun splitDelimitedLine(line: String): List<String> {
@@ -202,6 +217,13 @@ object CsvParser {
             }
         }
 
+        if (names.isEmpty()) {
+            rows.flatten()
+                .map { cleanName(it) }
+                .filter { isLikelyStudentName(it) }
+                .forEach { names.add(it) }
+        }
+
         return names.toList()
     }
 
@@ -212,19 +234,24 @@ object CsvParser {
 
     private fun isLikelyStudentName(value: String): Boolean {
         val text = cleanName(value)
-        if (text.length < 3) return false
+        if (text.length < 2) return false
+        if (text.length > 80) return false
         if (text.contains('\uFFFD')) return false
         val lower = text.lowercase()
-        if (lower.contains("workbook") || lower.startsWith("pk") || lower.contains("xml")) return false
-        val normalized = normalizeArabic(text)
-        val blocked = listOf("الاسم", "اللقب", "الكود", "رمز", "مرتبط", "غير مرتبط", "القسم", "المستوى", "الفوج", "قائمة", "تلميذ", "تلاميذ", "الخامسة", "الرابعة", "الثالثة", "الثانية", "الاولى", "الأولى", "السادسة")
-        if (blocked.any { normalized.contains(it) }) return false
+        if (lower.contains("workbook") || lower.startsWith("pk") || lower.contains("xml") || lower.contains("xl/")) return false
+        if (lower.startsWith("ech-") || lower.contains("code")) return false
+        if (text.all { it.isDigit() || it.isWhitespace() || it == '-' || it == '/' }) return false
+        val normalized = normalizeArabic(text).lowercase()
+        val blocked = setOf("الاسم", "اللقب", "الاسم واللقب", "الكود", "رمز", "مرتبط", "غير مرتبط", "القسم", "المستوى", "الفوج", "قائمة", "تلميذ", "تلاميذ", "قائمة تلاميذ", "الخامسة", "الرابعة", "الثالثة", "الثانية", "الاولى", "السادسة", "name", "student", "students", "class", "level", "group")
+        if (blocked.contains(normalized)) return false
         val arabicCount = text.count { it in '\u0600'..'\u06FF' }
-        return arabicCount >= 2
+        val latinCount = text.count { it in 'A'..'Z' || it in 'a'..'z' }
+        return arabicCount >= 2 || latinCount >= 2
     }
 
     private fun cleanName(value: String): String {
-        return value.replace(Regex("\\s+"), " ")
+        return value.replace(0.toChar(), ' ')
+            .replace(Regex("\\s+"), " ")
             .trim()
             .trim(',', ';', ':', '-', '_', '.', '،')
     }
