@@ -78,17 +78,17 @@ fun ParentLoginScreen(
                     errorMessage = null
                     coroutineScope.launch {
                         try {
-                            val result = firestoreRepository.linkParent(code.trim(), null)
-                            if (result.isSuccess) {
-                                val student = result.getOrNull()!!
+                            val student = kotlinx.coroutines.withTimeout(10000L) {
+                                firestoreRepository.getStudentByCode(code.trim())
+                            }
+
+                            if (student != null) {
                                 prefsRepository.saveUserRole("parent")
                                 prefsRepository.saveParentCode(student.parentCode)
-                                
-                                // Call onLoginSuccess immediately before waiting for token
+
                                 isLoading = false
                                 onLoginSuccess(student.id)
-                                
-                                // Fetch token in background safely
+
                                 kotlinx.coroutines.GlobalScope.launch {
                                     try {
                                         val token = kotlinx.coroutines.withTimeout(5000L) {
@@ -104,10 +104,10 @@ fun ParentLoginScreen(
                                 }
                                 return@launch
                             } else {
-                                errorMessage = result.exceptionOrNull()?.localizedMessage ?: "الكود غير صحيح، تأكد من المعلمة."
+                                errorMessage = "الكود غير صحيح، تأكد من المعلمة."
                             }
                         } catch (e: Exception) {
-                            errorMessage = e.localizedMessage ?: "حدث خطأ أثناء الاتصال."
+                            errorMessage = "تعذر فتح حساب الولي. تأكد من الاتصال ثم أعد المحاولة."
                         } finally {
                             isLoading = false
                         }
