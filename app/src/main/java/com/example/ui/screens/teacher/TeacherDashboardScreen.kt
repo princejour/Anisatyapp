@@ -69,6 +69,14 @@ fun TeacherDashboardScreen(
                     )
                 )
 
+                val oldCodes = db.collection("students").get().await().documents
+                    .mapNotNull { doc ->
+                        val name = normalizeDashboardImportedName(doc.getString("name").orEmpty())
+                        val code = doc.getString("parentCode").orEmpty()
+                        if (name.isNotBlank() && code.isNotBlank()) name to code else null
+                    }
+                    .toMap()
+
                 importedNames.forEach { name ->
                     val studentDoc = db.collection("students").document()
                     val student = Student(
@@ -76,7 +84,7 @@ fun TeacherDashboardScreen(
                         name = name,
                         classId = classDoc.id,
                         className = importedList.className,
-                        parentCode = "Ech-${(1000..9999).random()}"
+                        parentCode = oldCodes[normalizeDashboardImportedName(name)] ?: "Ech-${(1000..9999).random()}"
                     )
                     batch.set(studentDoc, student)
                 }
