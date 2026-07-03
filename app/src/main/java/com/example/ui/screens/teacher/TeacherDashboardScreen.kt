@@ -32,6 +32,8 @@ fun TeacherDashboardScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val classes by firestoreRepository.getClasses().collectAsState(initial = emptyList())
+    val importedClasses = classes.filter { it.source == "import" }
+    val visibleClasses = importedClasses.maxByOrNull { it.createdAt }?.let { listOf(it) } ?: emptyList()
 
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
@@ -52,71 +54,37 @@ fun TeacherDashboardScreen(
                 }
 
                 val db = FirebaseFirestore.getInstance()
-                val classSnapshot = db.collection("classes")
-                    .whereEqualTo("name", importedList.className)
-                    .get()
-                    .await()
-
-                val targetClassId = if (!classSnapshot.isEmpty) {
-                    classSnapshot.documents.first().id
-                } else {
-                    val newClass = db.collection("classes").document()
-                    newClass.set(
-                        mapOf(
-                            "id" to newClass.id,
-                            "name" to importedList.className,
-                            "level" to importedList.level,
-                            "group" to importedList.group,
-                            "createdAt" to System.currentTimeMillis()
-                        )
-                    ).await()
-                    newClass.id
-                }
-
-                val existingSnapshot = db.collection("students")
-                    .whereEqualTo("classId", targetClassId)
-                    .get()
-                    .await()
-
-                val existingNames = existingSnapshot.documents
-                    .mapNotNull { doc -> doc.getString("name") }
-                    .map { name -> normalizeDashboardImportedName(name) }
-                    .toMutableSet()
-
+                val classDoc = db.collection("classes").document()
                 val batch = db.batch()
-                var addedCount = 0
+
+                batch.set(
+                    classDoc,
+                    mapOf(
+                        "id" to classDoc.id,
+                        "name" to importedList.className,
+                        "level" to importedList.level,
+                        "group" to importedList.group,
+                        "createdAt" to System.currentTimeMillis(),
+                        "source" to "import"
+                    )
+                )
 
                 importedNames.forEach { name ->
-                    if (existingNames.add(name)) {
-                        val studentDoc = db.collection("students").document()
-                        val student = Student(
-                            id = studentDoc.id,
-                            name = name,
-                            classId = targetClassId,
-                            className = importedList.className,
-                            parentCode = "Ech-${(1000..9999).random()}"
-                        )
-                        batch.set(studentDoc, student)
-                        addedCount++
-                    }
+                    val studentDoc = db.collection("students").document()
+                    val student = Student(
+                        id = studentDoc.id,
+                        name = name,
+                        classId = classDoc.id,
+                        className = importedList.className,
+                        parentCode = "Ech-${(1000..9999).random()}"
+                    )
+                    batch.set(studentDoc, student)
                 }
 
-                if (addedCount > 0) {
-                    batch.commit().await()
-                    snackbarMessage = "تم استيراد $addedCount تلميذ دفعة واحدة"
-                } else {
-                    snackbarMessage = "القائمة مستوردة سابقاً"
-                }
+                batch.commit().await()
+                snackbarMessage = "تم استيراد ${importedNames.size} تلميذ"
                 showSnackbar = true
             }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        val created = firestoreRepository.seedDemoDataIfNeeded()
-        if (created) {
-            snackbarMessage = "تم إنشاء القوائم التجريبية بنجاح"
-            showSnackbar = true
         }
     }
 
@@ -127,19 +95,6 @@ fun TeacherDashboardScreen(
                 actions = {
                     TextButton(onClick = { importLauncher.launch("*/*") }) {
                         Text("استيراد قائمة تلاميذ", color = MaterialTheme.colorScheme.primary)
-                    }
-                    TextButton(onClick = {
-                        coroutineScope.launch {
-                            val created = firestoreRepository.seedDemoDataIfNeeded()
-                            snackbarMessage = if (created) {
-                                "تم إنشاء القوائم التجريبية بنجاح"
-                            } else {
-                                "القوائم التجريبية موجودة مسبقاً"
-                            }
-                            showSnackbar = true
-                        }
-                    }) {
-                        Text("إنشاء القوائم التجريبية", color = MaterialTheme.colorScheme.primary)
                     }
                     TextButton(onClick = onLogout) {
                         Text("خروج", color = MaterialTheme.colorScheme.error)
@@ -163,16 +118,16 @@ fun TeacherDashboardScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (classes.isEmpty()) {
+            if (visibleClasses.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    Text("استورد قائمة تلاميذ لعرض القسم")
                 }
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(classes) { schoolClass ->
+                    items(visibleClasses) { schoolClass ->
                         ClassCard(
                             schoolClass = schoolClass,
                             firestoreRepository = firestoreRepository,
