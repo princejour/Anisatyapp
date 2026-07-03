@@ -79,22 +79,32 @@ fun ClassDetailsScreen(
                         .whereEqualTo("classId", targetClassId)
                         .get()
                         .await()
-                    val existingNames = mutableSetOf<String>()
-
-                    existingSnapshot.documents.forEach { doc ->
-                        val existingName = doc.getString("name").orEmpty()
-                        if (isCorruptedImportedStudentName(existingName)) {
-                            doc.reference.delete().await()
-                        } else {
-                            existingNames.add(normalizeImportedStudentName(existingName))
-                        }
-                    }
+                    val existingNames = existingSnapshot.documents
+                        .mapNotNull { doc -> doc.getString("name") }
+                        .map { name -> normalizeImportedStudentName(name) }
+                        .toMutableSet()
+                    val batch = db.batch()
+                    var hasBatchWrites = false
 
                     importedNames.forEach { name ->
                         val normalizedName = normalizeImportedStudentName(name)
                         if (existingNames.add(normalizedName)) {
-                            firestoreRepository.addStudent(name, targetClassId, importedList.className, importedList.group)
+                            val studentDoc = db.collection("students").document()
+                            val parentCode = "Ech-${(1000..9999).random()}"
+                            val student = Student(
+                                id = studentDoc.id,
+                                name = name,
+                                classId = targetClassId,
+                                className = importedList.className,
+                                parentCode = parentCode
+                            )
+                            batch.set(studentDoc, student)
+                            hasBatchWrites = true
                         }
+                    }
+
+                    if (hasBatchWrites) {
+                        batch.commit().await()
                     }
                 }
             }
