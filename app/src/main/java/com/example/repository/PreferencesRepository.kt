@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "anisti_settings")
@@ -17,6 +18,8 @@ class PreferencesRepository(private val context: Context) {
         val USER_ROLE = stringPreferencesKey("user_role") // "teacher" or "parent"
         val PARENT_CODE = stringPreferencesKey("parent_code")
         val FCM_TOKEN = stringPreferencesKey("fcm_token")
+        val TEACHER_PASSWORD = stringPreferencesKey("teacher_password")
+        const val DEFAULT_TEACHER_PASSWORD = "123456"
     }
 
     val userRoleFlow: Flow<String?> = context.dataStore.data.map { prefs ->
@@ -25,6 +28,18 @@ class PreferencesRepository(private val context: Context) {
 
     val parentCodeFlow: Flow<String?> = context.dataStore.data.map { prefs ->
         prefs[PARENT_CODE]
+    }
+
+    suspend fun getTeacherPassword(): String {
+        return context.dataStore.data.map { prefs ->
+            prefs[TEACHER_PASSWORD] ?: DEFAULT_TEACHER_PASSWORD
+        }.first()
+    }
+
+    suspend fun saveTeacherPassword(password: String) {
+        context.dataStore.edit { prefs ->
+            prefs[TEACHER_PASSWORD] = password
+        }
     }
 
     suspend fun saveUserRole(role: String) {
@@ -47,7 +62,9 @@ class PreferencesRepository(private val context: Context) {
 
     suspend fun clearSession() {
         context.dataStore.edit { prefs ->
-            prefs.clear()
+            prefs.remove(USER_ROLE)
+            prefs.remove(PARENT_CODE)
+            prefs.remove(FCM_TOKEN)
         }
     }
 }
