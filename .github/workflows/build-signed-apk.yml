@@ -48,7 +48,7 @@ jobs:
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.STORE_PASSWORD }}
 
       - name: Upload signed APK artifact
         uses: actions/upload-artifact@v4
