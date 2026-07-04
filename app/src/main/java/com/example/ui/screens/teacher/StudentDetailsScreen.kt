@@ -1,11 +1,14 @@
 package com.example.ui.screens.teacher
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.models.Message
 import com.example.models.Student
@@ -23,6 +26,7 @@ fun StudentDetailsScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     var student by remember { mutableStateOf<Student?>(null) }
+    val sentMessages by firestoreRepository.getMessagesForStudent(studentId).collectAsState(initial = emptyList())
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("ملاحظة", "درس", "تقييم")
 
@@ -55,7 +59,13 @@ fun StudentDetailsScreen(
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize().padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
             if (student != null) {
                 Text(text = "القسم: ${student!!.className}")
                 Text(text = "الكود: ${student!!.parentCode}", color = MaterialTheme.colorScheme.primary)
@@ -154,6 +164,77 @@ fun StudentDetailsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(successMessage!!, color = MaterialTheme.colorScheme.primary)
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "سجل الرسائل المرسلة للولي",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            if (sentMessages.isEmpty()) {
+                Text(
+                    text = "لم يتم إرسال أي رسالة لهذا الولي بعد",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                sentMessages.forEach { message ->
+                    TeacherSentMessageCard(message = message)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TeacherSentMessageCard(message: Message) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                val typeLabel = when (message.type) {
+                    "note" -> "ملاحظة"
+                    "lesson" -> "درس"
+                    "grade" -> "تقييم"
+                    else -> "رسالة"
+                }
+                Text(text = typeLabel, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                if (message.importance == "عاجل") {
+                    Text(text = "عاجل", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                } else if (message.importance == "مهم") {
+                    Text(text = "مهم", color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
+                }
+            }
+            if (message.subject.isNotBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = "المادة: ${message.subject}", style = MaterialTheme.typography.bodyMedium)
+            }
+            if (message.title.isNotBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = message.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            }
+            if (message.type == "grade") {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${message.grade} / ${message.maxGrade}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            if (message.text.isNotBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = message.text, style = MaterialTheme.typography.bodyMedium)
+            }
+            val date = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date(message.timestamp))
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(text = date, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
