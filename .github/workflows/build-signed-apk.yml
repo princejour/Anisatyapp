@@ -26,10 +26,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Download Gradle
+      - name: Install Gradle manually
         run: |
-          curl -L -o gradle.zip https://services.gradle.org/distributions/gradle-9.3.1-bin.zip
-          unzip -q gradle.zip
+          curl -L https://services.gradle.org/distributions/gradle-9.3.1-bin.zip -o gradle.zip
+          unzip -q gradle.zip -d $RUNNER_TEMP/gradle
+          echo "$RUNNER_TEMP/gradle/gradle-9.3.1/bin" >> $GITHUB_PATH
 
       - name: Restore signing key
         env:
@@ -43,7 +44,7 @@ jobs:
           printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
 
       - name: Build signed release APK
-        run: ./gradle-9.3.1/bin/gradle :app:assembleRelease
+        run: gradle :app:assembleRelease
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
