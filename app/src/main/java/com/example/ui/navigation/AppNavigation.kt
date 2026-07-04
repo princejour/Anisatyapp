@@ -80,6 +80,7 @@ fun AppNavigation() {
         composable<TeacherDashboardRoute> {
             TeacherDashboardScreen(
                 firestoreRepository = firestoreRepo,
+                authRepository = authRepo,
                 onClassClick = { classId, className, classGroup ->
                     navController.navigate(ClassDetailsRoute(classId, className, classGroup))
                 },
