@@ -8,12 +8,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.models.SchoolClass
 import com.example.models.Student
@@ -41,6 +41,7 @@ fun TeacherDashboardScreen(
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var menuExpanded by remember { mutableStateOf(false) }
 
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
@@ -105,14 +106,36 @@ fun TeacherDashboardScreen(
             TopAppBar(
                 title = { Text("لوحة تحكم المعلمة") },
                 actions = {
-                    TextButton(onClick = { showChangePasswordDialog = true }) {
-                        Text("تغيير كلمة السر", color = MaterialTheme.colorScheme.primary)
-                    }
-                    TextButton(onClick = { importLauncher.launch("*/*") }) {
-                        Text("استيراد قائمة تلاميذ", color = MaterialTheme.colorScheme.primary)
-                    }
-                    TextButton(onClick = onLogout) {
-                        Text("خروج", color = MaterialTheme.colorScheme.error)
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "خيارات")
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("تغيير كلمة السر") },
+                                onClick = {
+                                    menuExpanded = false
+                                    showChangePasswordDialog = true
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("استيراد قائمة تلاميذ") },
+                                onClick = {
+                                    menuExpanded = false
+                                    importLauncher.launch("*/*")
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("خروج") },
+                                onClick = {
+                                    menuExpanded = false
+                                    onLogout()
+                                }
+                            )
+                        }
                     }
                 }
             )
@@ -160,7 +183,7 @@ fun TeacherDashboardScreen(
     }
 
     if (showChangePasswordDialog) {
-        ChangeTeacherPasswordDialog(
+        TeacherPasswordChangeDialog(
             authRepository = authRepository,
             onDismiss = { showChangePasswordDialog = false },
             onSuccess = {
@@ -170,92 +193,6 @@ fun TeacherDashboardScreen(
             }
         )
     }
-}
-
-@Composable
-private fun ChangeTeacherPasswordDialog(
-    authRepository: AuthRepository,
-    onDismiss: () -> Unit,
-    onSuccess: () -> Unit
-) {
-    val coroutineScope = rememberCoroutineScope()
-    var currentPassword by remember { mutableStateOf("") }
-    var newPassword by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var isSaving by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("تغيير كلمة سر المعلمة") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = currentPassword,
-                    onValueChange = { currentPassword = it },
-                    label = { Text("كلمة السر الحالية") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = newPassword,
-                    onValueChange = { newPassword = it },
-                    label = { Text("كلمة السر الجديدة") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = confirmPassword,
-                    onValueChange = { confirmPassword = it },
-                    label = { Text("تأكيد كلمة السر الجديدة") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                if (errorMessage != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error)
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                enabled = !isSaving,
-                onClick = {
-                    if (currentPassword.isBlank() || newPassword.isBlank() || confirmPassword.isBlank()) {
-                        errorMessage = "الرجاء تعمير كل الخانات"
-                        return@Button
-                    }
-                    if (newPassword != confirmPassword) {
-                        errorMessage = "كلمة السر الجديدة غير متطابقة"
-                        return@Button
-                    }
-                    isSaving = true
-                    errorMessage = null
-                    coroutineScope.launch {
-                        val result = authRepository.changeTeacherPassword(currentPassword, newPassword)
-                        isSaving = false
-                        if (result.isSuccess) {
-                            onSuccess()
-                        } else {
-                            errorMessage = result.exceptionOrNull()?.message ?: "تعذر تغيير كلمة السر"
-                        }
-                    }
-                }
-            ) {
-                Text(if (isSaving) "جاري الحفظ..." else "حفظ")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("إلغاء")
-            }
-        }
-    )
 }
 
 private fun normalizeDashboardImportedName(value: String): String {
